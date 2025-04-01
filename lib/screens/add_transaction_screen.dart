@@ -23,7 +23,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       'type': _type,
       'date': DateTime.now().toIso8601String(),
     });
-    Navigator.pop(context);
+    Navigator.pop(context, true);
   }
 
   @override

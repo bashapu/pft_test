@@ -12,24 +12,47 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   int _currentIndex = 0;
-  final List<Widget> _screens = [
-    HomeScreen(),
-    ReportsScreen(),
-    Container(),
-    GoalsScreen(),
-    ProfileScreen(),
-  ];
+  late List<Widget> _screens;
+  final GlobalKey<HomeScreenState> _homeKey = GlobalKey();
+
+  @override
+  void initState() {
+    super.initState();
+    _screens = [
+      HomeScreen(key: _homeKey),
+      ReportsScreen(),
+      Container(),
+      GoalsScreen(),
+      ProfileScreen(),
+    ];
+  }
+
+  void _onAddTransaction() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => AddTransactionScreen()),
+    );
+    if (_currentIndex == 0 && result == true) {
+      _homeKey.currentState?.refreshData();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: _screens[_currentIndex],
+      floatingActionButton: FloatingActionButton(
+        onPressed: _onAddTransaction,
+        child: Icon(Icons.add),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: BottomAppBar(
         shape: CircularNotchedRectangle(),
-        notchMargin: 6,
+        notchMargin: 6.0,
         child: Wrap(
           children: [
             BottomNavigationBar(
+              type: BottomNavigationBarType.fixed,
               currentIndex:
                   _currentIndex >= 2 ? _currentIndex - 1 : _currentIndex,
               onTap:
@@ -58,16 +81,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ],
             ),
           ],
-        ),
+        )
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => AddTransactionScreen()),
-        ),
-        child: Icon(Icons.add),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
 }
