@@ -8,6 +8,11 @@ class AddTransactionScreen extends StatefulWidget {
 
 class _AddTransactionScreenState extends State<AddTransactionScreen> {
   final _amountController = TextEditingController();
+  final List<String> allCategories = [
+    'Salary', 'Freelance', 'Investments', // income
+    'Food', 'Rent', 'Entertainment', 'Transport', // expenses
+  ];
+
   String _category = 'Food';
   String _type = 'Expense';
 
@@ -36,7 +41,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
             ),
             DropdownButton<String>(
               value: _category,
-              items: ['Food', 'Rent', 'Entertainment', 'Transport'].map((String value) {
+              items: allCategories.map((String value) {
                 return DropdownMenuItem<String>(
                   value: value,
                   child: Text(value),

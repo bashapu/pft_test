@@ -51,20 +51,26 @@ class _ReportsScreenState extends State<ReportsScreen> {
                 PieChartData(
                   sections: [
                     PieChartSectionData(
-                      color: Colors.green,
+                      color: Colors.blue,
                       value: income,
                       title: 'Income\n\$${income.toStringAsFixed(0)}',
                       radius: 100,
-                      titleStyle: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      titleStyle: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     PieChartSectionData(
-                      color: Colors.red,
+                      color: Colors.orange,
                       value: expenses,
                       title: 'Expenses\n\$${expenses.toStringAsFixed(0)}',
                       radius: 100,
-                      titleStyle: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      titleStyle: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ],
+                  ]
                 ),
               ),
             ),
