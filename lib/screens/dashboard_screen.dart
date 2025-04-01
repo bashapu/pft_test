@@ -27,14 +27,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
       bottomNavigationBar: BottomAppBar(
         shape: CircularNotchedRectangle(),
         notchMargin: 6,
-        child: BottomNavigationBar(
-          currentIndex: _currentIndex >= 2 ? _currentIndex - 1 : _currentIndex,
-          onTap: (index) => setState(() => _currentIndex = index >= 2 ? index + 1 : index),
-          items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.dashboard), label: 'Home'),
-            BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: 'Reports'),
-            BottomNavigationBarItem(icon: Icon(Icons.savings), label: 'Goals'),
-            BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+        child: Wrap(
+          children: [
+            BottomNavigationBar(
+              currentIndex:
+                  _currentIndex >= 2 ? _currentIndex - 1 : _currentIndex,
+              onTap:
+                  (index) => setState(
+                    () => _currentIndex = index >= 2 ? index + 1 : index,
+                  ),
+              unselectedItemColor: Colors.grey,
+              selectedItemColor: Colors.blue,
+              items: const [
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.dashboard),
+                  label: 'Home',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.bar_chart),
+                  label: 'Reports',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.savings),
+                  label: 'Goals',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.person),
+                  label: 'Profile',
+                ),
+              ],
+            ),
           ],
         ),
       ),

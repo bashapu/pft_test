@@ -4,6 +4,7 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(title: Text('Profile & Settings')),
       body: ListView(
         padding: EdgeInsets.all(16.0),

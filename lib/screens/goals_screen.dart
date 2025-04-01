@@ -36,6 +36,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(title: Text('Savings Goals')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -75,7 +76,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
                       ),
                       trailing: IconButton(
                         icon: Icon(Icons.add),
-                        onPressed: () => _updateSaved(index, 50), // example increment
+                        onPressed: () => _updateSaved(index, 50),
                       ),
                     ),
                   );
