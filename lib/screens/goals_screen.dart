@@ -24,13 +24,40 @@ class _GoalsScreenState extends State<GoalsScreen> {
     });
   }
 
-  void _updateSaved(int index, double amount) {
-    setState(() {
-      goals[index]['saved'] += amount;
-      if (goals[index]['saved'] > goals[index]['target']) {
-        goals[index]['saved'] = goals[index]['target'];
-      }
-    });
+  void _updateSavedAmount(int index) {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Add Amount to Goal'),
+        content: TextField(
+          controller: controller,
+          keyboardType: TextInputType.number,
+          decoration: InputDecoration(labelText: 'Amount to add'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final value = double.tryParse(controller.text);
+              if (value != null) {
+                setState(() {
+                  goals[index]['saved'] += value;
+                  if (goals[index]['saved'] > goals[index]['target']) {
+                    goals[index]['saved'] = goals[index]['target'];
+                  }
+                });
+              }
+              Navigator.pop(context);
+            },
+            child: Text('Add'),
+          )
+        ],
+      ),
+    );
   }
 
   @override
@@ -76,7 +103,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
                       ),
                       trailing: IconButton(
                         icon: Icon(Icons.add),
-                        onPressed: () => _updateSaved(index, 50),
+                        onPressed: () => _updateSavedAmount(index),
                       ),
                     ),
                   );
