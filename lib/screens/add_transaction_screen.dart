@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/database_helper.dart';
+import '../services/session_manager.dart';
 
 class AddTransactionScreen extends StatefulWidget {
   @override
@@ -8,6 +9,7 @@ class AddTransactionScreen extends StatefulWidget {
 
 class _AddTransactionScreenState extends State<AddTransactionScreen> {
   final _amountController = TextEditingController();
+  DateTime _selectedDate = DateTime.now();
   final List<String> allCategories = [
     'Salary', 'Freelance', 'Investments', // income
     'Food', 'Rent', 'Entertainment', 'Transport', // expenses
@@ -21,7 +23,8 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       'amount': double.parse(_amountController.text),
       'category': _category,
       'type': _type,
-      'date': DateTime.now().toIso8601String(),
+      'date': _selectedDate.toIso8601String(),
+      'userId': SessionManager().currentUser!.id
     });
     Navigator.pop(context, true);
   }
@@ -58,6 +61,23 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                 );
               }).toList(),
               onChanged: (newVal) => setState(() => _type = newVal!),
+            ),
+            SizedBox(height: 20),
+            TextButton(
+              onPressed: () async {
+                DateTime? picked = await showDatePicker(
+                  context: context,
+                  initialDate: _selectedDate,
+                  firstDate: DateTime(2000),
+                  lastDate: DateTime(2100),
+                );
+                if (picked != null) {
+                  setState(() => _selectedDate = picked);
+                }
+              },
+              child: Text(
+                "Date: ${_selectedDate.toLocal().toString().split(' ')[0]}",
+              ),
             ),
             SizedBox(height: 20),
             ElevatedButton(
