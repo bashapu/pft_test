@@ -13,6 +13,8 @@ class ProfileScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Text('ID: ${user?.id ?? "No ID"}'),
+            SizedBox(height: 8),
             Text('Name: ${user?.name ?? "Guest"}'),
             SizedBox(height: 8),
             Text('Email: ${user?.email ?? "Not logged in"}'),

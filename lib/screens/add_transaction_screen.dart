@@ -9,6 +9,7 @@ class AddTransactionScreen extends StatefulWidget {
 
 class _AddTransactionScreenState extends State<AddTransactionScreen> {
   final _amountController = TextEditingController();
+  final _titleController = TextEditingController();
   DateTime _selectedDate = DateTime.now();
   final List<String> allCategories = [
     'Salary', 'Freelance', 'Investments', // income
@@ -18,13 +19,15 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   String _category = 'Food';
   String _type = 'Expense';
 
+  final userId = SessionManager().currentUser!.id;
   void _saveTransaction() async {
     await DatabaseHelper.instance.insertTransaction({
+      'title': _titleController.text,
       'amount': double.parse(_amountController.text),
       'category': _category,
       'type': _type,
       'date': _selectedDate.toIso8601String(),
-      'userId': SessionManager().currentUser!.id
+      'userId': userId,
     });
     Navigator.pop(context, true);
   }
@@ -37,6 +40,10 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
+            TextField(
+              controller: _titleController,
+              decoration: InputDecoration(labelText: 'Title'),
+            ),
             TextField(
               controller: _amountController,
               decoration: InputDecoration(labelText: 'Amount'),

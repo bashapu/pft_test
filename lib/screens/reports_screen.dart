@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:pft_test/services/session_manager.dart';
 import '../services/database_helper.dart';
 
 class ReportsScreen extends StatefulWidget {
@@ -10,6 +11,7 @@ class ReportsScreen extends StatefulWidget {
 class _ReportsScreenState extends State<ReportsScreen> {
   double income = 0;
   double expenses = 0;
+  final userId = SessionManager().currentUser?.id;
 
   @override
   void initState() {
@@ -18,7 +20,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
   }
 
   Future<void> _loadSummary() async {
-    final transactions = await DatabaseHelper.instance.fetchTransactions();
+    final transactions = await DatabaseHelper.instance.fetchTransactions(userId);
     double totalIncome = 0;
     double totalExpense = 0;
 

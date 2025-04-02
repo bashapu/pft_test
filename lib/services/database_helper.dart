@@ -1,5 +1,6 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
+import 'session_manager.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
@@ -20,12 +21,33 @@ class DatabaseHelper {
 
   Future _createDB(Database db, int version) async {
     await db.execute('''
-      CREATE TABLE transactions (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        amount REAL,
-        category TEXT,
-        type TEXT,
-        date TEXT
+      CREATE TABLE IF NOT EXISTS transactions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT,
+      amount REAL,
+      type TEXT,
+      category TEXT,
+      date TEXT,
+      userId TEXT
+    )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS users (
+      id TEXT PRIMARY KEY,
+      name TEXT,
+      email TEXT,
+      password TEXT
+    )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS goals (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT,
+      targetAmount REAL,
+      savedAmount REAL,
+      userId TEXT
       )
     ''');
   }
@@ -35,8 +57,13 @@ class DatabaseHelper {
     return await db.insert('transactions', row);
   }
 
-  Future<List<Map<String, dynamic>>> fetchTransactions() async {
+  Future<List<Map<String, dynamic>>> fetchTransactions(userId) async {
     final db = await instance.database;
-    return await db.query('transactions', orderBy: 'date DESC');
+    return await db.query(
+      'transactions',
+      where: 'userId = ?',
+      whereArgs: [userId],
+      orderBy: 'date DESC',
+    );
   }
 }
