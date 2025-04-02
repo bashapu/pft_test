@@ -178,7 +178,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
                               PopupMenuItem(value: 'edit', child: Text('Edit')),
                               PopupMenuItem(
                                 value: 'save',
-                                child: Text('Add Saved'),
+                                child: Text('Add Saved Amount'),
                               ),
                               PopupMenuItem(
                                 value: 'delete',
@@ -190,9 +190,9 @@ class _GoalsScreenState extends State<GoalsScreen> {
                   );
                 },
               ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: ElevatedButton(
         onPressed: _addGoal,
-        child: Icon(Icons.edit_note), // changed from add to pencil/edit style
+        child: Text('Add Saving Goal'), // changed from add to pencil/edit style
       ),
     );
   }

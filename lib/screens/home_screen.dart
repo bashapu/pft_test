@@ -3,7 +3,7 @@ import '../services/database_helper.dart';
 import '../services/session_manager.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  const HomeScreen({super.key});
 
   @override
   HomeScreenState createState() => HomeScreenState();
@@ -38,6 +38,117 @@ class HomeScreenState extends State<HomeScreen> {
       _expenses = expenses;
     });
   }
+
+  Future<void> _editTransaction(
+    BuildContext context,
+    Map<String, dynamic> t,
+  ) async {
+    final titleController = TextEditingController(text: t['title']);
+    final amountController = TextEditingController(
+      text: t['amount'].toString(),
+    );
+    String selectedCategory = t['category'];
+    String selectedType = t['type'];
+    DateTime selectedDate = DateTime.tryParse(t['date']) ?? DateTime.now();
+
+    await showDialog(
+      context: context,
+      builder:
+          (_) => AlertDialog(
+            title: Text('Edit Transaction'),
+            content: StatefulBuilder(
+              builder:
+                  (context, setState) => Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextField(
+                        controller: titleController,
+                        decoration: InputDecoration(labelText: 'Title'),
+                      ),
+                      TextField(
+                        controller: amountController,
+                        decoration: InputDecoration(labelText: 'Amount'),
+                        keyboardType: TextInputType.number,
+                      ),
+                      DropdownButton<String>(
+                        value: selectedType,
+                        items:
+                            ['Income', 'Expense']
+                                .map(
+                                  (type) => DropdownMenuItem(
+                                    value: type,
+                                    child: Text(type),
+                                  ),
+                                )
+                                .toList(),
+                        onChanged: (val) => setState(() => selectedType = val!),
+                      ),
+                      DropdownButton<String>(
+                        value: selectedCategory,
+                        items:
+                            [
+                                  'Food',
+                                  'Rent',
+                                  'Entertainment',
+                                  'Salary',
+                                  'Freelance',
+                                  'Investments',
+                                ]
+                                .map(
+                                  (cat) => DropdownMenuItem(
+                                    value: cat,
+                                    child: Text(cat),
+                                  ),
+                                )
+                                .toList(),
+                        onChanged:
+                            (val) => setState(() => selectedCategory = val!),
+                      ),
+                      TextButton(
+                        onPressed: () async {
+                          final picked = await showDatePicker(
+                            context: context,
+                            initialDate: selectedDate,
+                            firstDate: DateTime(2000),
+                            lastDate: DateTime(2100),
+                          );
+                          if (picked != null) {
+                            setState(() => selectedDate = picked);
+                          }
+                        },
+                        child: Text(
+                          "Date: ${selectedDate.toLocal().toString().split(' ')[0]}",
+                        ),
+                      ),
+                    ],
+                  ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () async {
+                  final db = await DatabaseHelper.instance.database;
+                  await db.update(
+                    'transactions',
+                    {
+                      'title': titleController.text,
+                      'amount': double.tryParse(amountController.text) ?? 0.0,
+                      'type': selectedType,
+                      'category': selectedCategory,
+                      'date': selectedDate.toIso8601String(),
+                    },
+                    where: 'id = ?',
+                    whereArgs: [t['id']],
+                  );
+                  Navigator.pop(context);
+                  refreshData();
+                },
+                child: Text('Save'),
+              ),
+            ],
+          ),
+    );
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -101,63 +212,79 @@ class HomeScreenState extends State<HomeScreen> {
                       itemCount: _transactions.length,
                       itemBuilder: (context, index) {
                         final t = _transactions[index];
-                        return ListTile(
-                          leading: Icon(
-                            t['type'] == 'Income' ? Icons.arrow_downward : Icons.arrow_upward,
-                            color: t['type'] == 'Income' ? Colors.green : Colors.red,
+                        return InkWell(
+                          onTap: () => _editTransaction(context, t),
+                          child: Card(
+                            child: ListTile(
+                                leading: Icon(
+                                  t['type'] == 'Income'
+                                      ? Icons.arrow_downward
+                                      : Icons.arrow_upward,
+                                  color:
+                                      t['type'] == 'Income'
+                                          ? Colors.green
+                                          : Colors.red,
+                                ),
+                                title: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      t['title'],
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                    Text(
+                                      '\$${(t['amount'] as double).toStringAsFixed(2)}',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color:
+                                            t['type'] == 'Income'
+                                                ? Colors.green
+                                                : Colors.red,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                subtitle: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Text(
+                                          '${t['category']}',
+                                          style: TextStyle(
+                                            color: Colors.grey[700],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          Icons.calendar_today,
+                                          size: 14,
+                                          color: Colors.grey,
+                                        ),
+                                        SizedBox(width: 4),
+                                        Text(
+                                          '${t['date'].toString().split('T')[0]}',
+                                          style: TextStyle(
+                                            color: Colors.grey[600],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              )
                           ),
-                          title: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  t['title'],
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                                Text(
-                                  '\$${(t['amount'] as double).toStringAsFixed(2)}',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color:
-                                        t['type'] == 'Income'
-                                            ? Colors.green
-                                            : Colors.red,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            subtitle: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
-                                  children: [
-                                    Text(
-                                      '${t['category']}',
-                                      style: TextStyle(color: Colors.grey[700]),
-                                    ),
-                                  ],
-                                ),
-                                Row(
-                                  children: [
-                                    Icon(
-                                      Icons.calendar_today,
-                                      size: 14,
-                                      color: Colors.grey,
-                                    ),
-                                    SizedBox(width: 4),
-                                    Text(
-                                      '${t['date'].toString().split('T')[0]}',
-                                      style: TextStyle(color: Colors.grey[600]),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
                         );
-                      },
+                      }
                     ),
             ),
           ],
