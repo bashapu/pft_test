@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import '../models/goal.dart';
+import '../services/database_helper.dart';
+import '../services/session_manager.dart';
 
 class GoalsScreen extends StatefulWidget {
   @override
@@ -6,113 +9,192 @@ class GoalsScreen extends StatefulWidget {
 }
 
 class _GoalsScreenState extends State<GoalsScreen> {
-  final TextEditingController _goalController = TextEditingController();
-  final TextEditingController _amountController = TextEditingController();
+  List<Goal> goals = [];
 
-  List<Map<String, dynamic>> goals = [];
-
-  void _addGoal() {
-    if (_goalController.text.isEmpty || _amountController.text.isEmpty) return;
-    setState(() {
-      goals.add({
-        'goal': _goalController.text,
-        'target': double.tryParse(_amountController.text) ?? 0,
-        'saved': 0.0,
-      });
-      _goalController.clear();
-      _amountController.clear();
-    });
+  @override
+  void initState() {
+    super.initState();
+    _loadGoals();
   }
 
-  void _updateSavedAmount(int index) {
-    final controller = TextEditingController();
-    showDialog(
+  Future<void> _loadGoals() async {
+    final userId = SessionManager().currentUser?.id ?? '';
+    final result = await DatabaseHelper.instance.getGoalsByUser(userId);
+    setState(() => goals = result);
+  }
+
+  Future<void> _addGoal() async {
+    final titleController = TextEditingController();
+    final targetController = TextEditingController();
+
+    await showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Add Amount to Goal'),
-        content: TextField(
-          controller: controller,
-          keyboardType: TextInputType.number,
-          decoration: InputDecoration(labelText: 'Amount to add'),
+      builder: (_) => AlertDialog(
+        title: Text('New Goal'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(controller: titleController, decoration: InputDecoration(labelText: 'Title')),
+            TextField(controller: targetController, decoration: InputDecoration(labelText: 'Target Amount'), keyboardType: TextInputType.number),
+          ],
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              final value = double.tryParse(controller.text);
-              if (value != null) {
-                setState(() {
-                  goals[index]['saved'] += value;
-                  if (goals[index]['saved'] > goals[index]['target']) {
-                    goals[index]['saved'] = goals[index]['target'];
-                  }
-                });
-              }
+            onPressed: () async {
+              final goal = Goal(
+                title: titleController.text,
+                targetAmount: double.tryParse(targetController.text) ?? 0.0,
+                savedAmount: 0.0,
+                userId: SessionManager().currentUser!.id,
+              );
+              await DatabaseHelper.instance.insertGoal(goal);
               Navigator.pop(context);
+              _loadGoals();
             },
             child: Text('Add'),
-          )
+          ),
         ],
       ),
     );
   }
 
+  Future<void> _updateSavedAmount(Goal goal) async {
+    final amountController = TextEditingController();
+
+    await showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text('Add Saved Amount'),
+        content: TextField(
+          controller: amountController,
+          decoration: InputDecoration(labelText: 'Amount'),
+          keyboardType: TextInputType.number,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              final addAmount = double.tryParse(amountController.text) ?? 0.0;
+              final newAmount = (goal.savedAmount + addAmount).clamp(0.0, goal.targetAmount);
+              await DatabaseHelper.instance.updateGoalSavedAmount(goal.id!, newAmount);
+              Navigator.pop(context);
+              _loadGoals();
+            },
+            child: Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _editGoal(Goal goal) async {
+    final titleController = TextEditingController(text: goal.title);
+    final targetController = TextEditingController(
+      text: goal.targetAmount.toString(),
+    );
+
+    await showDialog(
+      context: context,
+      builder:
+          (_) => AlertDialog(
+            title: Text('Edit Goal'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: titleController,
+                  decoration: InputDecoration(labelText: 'Title'),
+                ),
+                TextField(
+                  controller: targetController,
+                  decoration: InputDecoration(labelText: 'Target Amount'),
+                  keyboardType: TextInputType.number,
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () async {
+                  final db = await DatabaseHelper.instance.database;
+                  await db.update(
+                    'goals',
+                    {
+                      'title': titleController.text,
+                      'targetAmount':
+                          double.tryParse(targetController.text) ??
+                          goal.targetAmount,
+                    },
+                    where: 'id = ?',
+                    whereArgs: [goal.id],
+                  );
+                  Navigator.pop(context);
+                  _loadGoals();
+                },
+                child: Text('Update'),
+              ),
+            ],
+          ),
+    );
+  }
+
+  Future<void> _deleteGoal(int id) async {
+    final db = await DatabaseHelper.instance.database;
+    await db.delete('goals', where: 'id = ?', whereArgs: [id]);
+    _loadGoals();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: false,
       appBar: AppBar(title: Text('Savings Goals')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            TextField(
-              controller: _goalController,
-              decoration: InputDecoration(labelText: 'Goal Name'),
-            ),
-            TextField(
-              controller: _amountController,
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(labelText: 'Target Amount'),
-            ),
-            SizedBox(height: 10),
-            ElevatedButton(
-              onPressed: _addGoal,
-              child: Text('Add Goal'),
-            ),
-            Expanded(
-              child: ListView.builder(
+      body:
+          goals.isEmpty
+              ? Center(child: Text("No goals yet 😔"))
+              : ListView.builder(
                 itemCount: goals.length,
-                itemBuilder: (context, index) {
+                itemBuilder: (_, index) {
                   final goal = goals[index];
-                  double progress = goal['saved'] / goal['target'];
+                  final percent = goal.savedAmount / goal.targetAmount;
                   return Card(
-                    margin: EdgeInsets.symmetric(vertical: 8),
+                    margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: ListTile(
-                      title: Text(goal['goal']),
+                      title: Text(goal.title),
                       subtitle: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          LinearProgressIndicator(value: progress),
-                          SizedBox(height: 4),
-                          Text('Saved: \$${goal['saved'].toStringAsFixed(2)} / \$${goal['target'].toStringAsFixed(2)}')
+                          Text(
+                            '${goal.savedAmount.toStringAsFixed(2)} / ${goal.targetAmount}',
+                          ),
+                          LinearProgressIndicator(value: percent),
                         ],
                       ),
-                      trailing: IconButton(
-                        icon: Icon(Icons.add),
-                        onPressed: () => _updateSavedAmount(index),
+                      trailing: PopupMenuButton<String>(
+                        onSelected: (value) {
+                          if (value == 'edit') _editGoal(goal);
+                          if (value == 'delete') _deleteGoal(goal.id!);
+                          if (value == 'save') _updateSavedAmount(goal);
+                        },
+                        itemBuilder:
+                            (context) => [
+                              PopupMenuItem(value: 'edit', child: Text('Edit')),
+                              PopupMenuItem(
+                                value: 'save',
+                                child: Text('Add Saved'),
+                              ),
+                              PopupMenuItem(
+                                value: 'delete',
+                                child: Text('Delete'),
+                              ),
+                            ],
                       ),
                     ),
                   );
                 },
               ),
-            )
-          ],
-        ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _addGoal,
+        child: Icon(Icons.edit_note), // changed from add to pencil/edit style
       ),
     );
   }
+
 }

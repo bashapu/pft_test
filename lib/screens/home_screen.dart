@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/database_helper.dart';
 import '../services/session_manager.dart';
-import 'package:sqflite/sqflite.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -107,8 +106,56 @@ class HomeScreenState extends State<HomeScreen> {
                             t['type'] == 'Income' ? Icons.arrow_downward : Icons.arrow_upward,
                             color: t['type'] == 'Income' ? Colors.green : Colors.red,
                           ),
-                          title: Text('${t['category']} - \$${t['amount'].toStringAsFixed(2)}'),
-                          subtitle: Text(t['date'].toString().split('T')[0]),
+                          title: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  t['title'],
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                Text(
+                                  '\$${(t['amount'] as double).toStringAsFixed(2)}',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color:
+                                        t['type'] == 'Income'
+                                            ? Colors.green
+                                            : Colors.red,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            subtitle: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    Text(
+                                      '${t['category']}',
+                                      style: TextStyle(color: Colors.grey[700]),
+                                    ),
+                                  ],
+                                ),
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.calendar_today,
+                                      size: 14,
+                                      color: Colors.grey,
+                                    ),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      '${t['date'].toString().split('T')[0]}',
+                                      style: TextStyle(color: Colors.grey[600]),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
                         );
                       },
                     ),

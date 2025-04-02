@@ -1,6 +1,6 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
-import 'session_manager.dart';
+import '../models/goal.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
@@ -66,4 +66,29 @@ class DatabaseHelper {
       orderBy: 'date DESC',
     );
   }
+
+  Future<void> insertGoal(Goal goal) async {
+  final db = await database;
+  await db.insert('goals', goal.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+}
+
+Future<List<Goal>> getGoalsByUser(String userId) async {
+  final db = await database;
+  final maps = await db.query(
+    'goals',
+    where: 'userId = ?',
+    whereArgs: [userId],
+  );
+  return List.generate(maps.length, (i) => Goal.fromMap(maps[i]));
+}
+
+Future<void> updateGoalSavedAmount(int id, double newAmount) async {
+  final db = await database;
+  await db.update(
+    'goals',
+    {'savedAmount': newAmount},
+    where: 'id = ?',
+    whereArgs: [id],
+  );
+}
 }
